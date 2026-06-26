@@ -1,67 +1,82 @@
 // ============================================================
-// 0. 等待 DOM 完全加载再执行所有逻辑
+// 等待 DOM 完全加载后再执行所有逻辑
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ============================================================
-    // 1. 弹幕功能
-    // ============================================================
+    console.log('🔍 开始初始化校园墙...');
+
+    // ---------- 1. 弹幕功能 ----------
     const container = document.getElementById('danmaku-area');
+    console.log('📦 容器 #danmaku-area:', container);
+
     if (!container) {
-        console.error('❌ 找不到 #danmaku-area，请检查 HTML');
+        console.error('❌ 错误：找不到 id="danmaku-area" 的元素，请检查 HTML');
         return;
     }
 
-    const config = {
-        container: container,
-        trackCount: 6,
-        duration: 8000
-    };
-    const bullet = new BulletJs(config);
-
-    function sendDanmaku(text) {
-        if (!text.trim()) return;
-        const colorClass = 'color-' + Math.floor(Math.random() * 5);
-        const fontSize = 20 + Math.floor(Math.random() * 16);
-        const el = document.createElement('span');
-        el.textContent = text;
-        el.className = `bullet-item ${colorClass}`;
-        el.style.fontSize = fontSize + 'px';
-        bullet.shoot(el);
+    if (typeof BulletJs === 'undefined') {
+        console.error('❌ 错误：BulletJs 库未加载，请检查 CDN 链接');
+        return;
     }
 
-    document.getElementById('send-btn').addEventListener('click', function() {
-        const input = document.getElementById('msg-input');
-        sendDanmaku(input.value);
-        input.value = '';
-    });
-    document.getElementById('msg-input').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('send-btn').click();
-    });
+    try {
+        const config = {
+            container: container,
+            trackCount: 6,
+            duration: 8000
+        };
+        const bullet = new BulletJs(config);
+        console.log('✅ 弹幕库初始化成功');
 
-    // ============================================================
-    // 2. 献花：五彩纸屑 + 花朵 emoji 飘落
-    // ============================================================
+        // 发送弹幕函数
+        function sendDanmaku(text) {
+            if (!text.trim()) return;
+            const colorClass = 'color-' + Math.floor(Math.random() * 5);
+            const fontSize = 20 + Math.floor(Math.random() * 16);
+            const el = document.createElement('span');
+            el.textContent = text;
+            el.className = `bullet-item ${colorClass}`;
+            el.style.fontSize = fontSize + 'px';
+            bullet.shoot(el);
+        }
+
+        // 绑定发送事件
+        document.getElementById('send-btn').addEventListener('click', function() {
+            const input = document.getElementById('msg-input');
+            sendDanmaku(input.value);
+            input.value = '';
+        });
+        document.getElementById('msg-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('send-btn').click();
+        });
+
+        // 欢迎弹幕
+        const welcomeMsgs = ['🌸 欢迎回来', '✨ 青春不散场', '📖 莘庄中学记忆', '💖 这里永远有你的位置'];
+        welcomeMsgs.forEach((msg, idx) => {
+            setTimeout(() => sendDanmaku(msg), idx * 1500);
+        });
+
+        // 暴露调试
+        window._bullet = bullet;
+
+    } catch (e) {
+        console.error('❌ 弹幕初始化失败:', e);
+    }
+
+    // ---------- 2. 献花功能 ----------
     document.getElementById('flower-btn').addEventListener('click', function() {
+        // 五彩纸屑
         if (typeof confetti === 'function') {
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             confetti({ particleCount: 100, spread: 60, origin: { x: 0.1, y: 0.5 } });
             confetti({ particleCount: 100, spread: 60, origin: { x: 0.9, y: 0.5 } });
         } else {
-            console.warn('confetti 库未加载，请检查 CDN');
+            console.warn('⚠️ confetti 库未加载，跳过纸屑效果');
         }
         launchFlowers();
     });
 
-    // ============================================================
-    // 3. 欢迎弹幕（页面加载后自动发送）
-    // ============================================================
-    const msgs = ['🌸 欢迎回来', '✨ 青春不散场', '📖 莘庄中学记忆', '💖 这里永远有你的位置'];
-    msgs.forEach((msg, idx) => setTimeout(() => sendDanmaku(msg), idx * 1500));
-
-    // ============================================================
-    // 4. 哭泣 emoji 下雨（持续背景）
-    // ============================================================
+    // ---------- 3. 哭泣雨滴 ----------
     (function initRain() {
         const canvas = document.getElementById('rainCanvas');
         if (!canvas) return;
@@ -78,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const emojis = ['😢', '😭', '🥺', '💧', '😥'];
         const drops = [];
         const COUNT = 60;
-
         for (let i = 0; i < COUNT; i++) {
             drops.push({
                 x: Math.random() * canvas.width,
@@ -111,11 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
             requestAnimationFrame(drawRain);
         }
         drawRain();
+        console.log('☔ 哭泣雨滴已启动');
     })();
 
-    // ============================================================
-    // 5. 花朵 emoji 飘落
-    // ============================================================
+    // ---------- 4. 花朵飘落 ----------
     let flowerDrops = [];
     let flowerAnimationId = null;
 
@@ -124,7 +137,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!container) return;
         const emojis = ['🌸', '🌺', '🌹', '🌷', '🌻', '💐', '🌼', '🌸'];
         const count = 25 + Math.floor(Math.random() * 16);
-
         for (let i = 0; i < count; i++) {
             const el = document.createElement('span');
             el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
@@ -138,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
             el.style.opacity = 0.8 + Math.random() * 0.2;
             el.style.transform = `rotate(${Math.random() * 360}deg)`;
             container.appendChild(el);
-
             flowerDrops.push({
                 el: el,
                 y: -30,
@@ -148,7 +159,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 opacity: 0.8 + Math.random() * 0.2
             });
         }
-
         if (!flowerAnimationId) {
             animateFlowers();
         }
@@ -156,9 +166,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function animateFlowers() {
         const container = document.querySelector('.container');
-        if (!container) return;
+        if (!container) {
+            flowerAnimationId = null;
+            return;
+        }
         const containerHeight = container.getBoundingClientRect().height;
-
         let anyActive = false;
         for (let i = flowerDrops.length - 1; i >= 0; i--) {
             const drop = flowerDrops[i];
@@ -171,7 +183,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             drop.el.style.transform = `translateY(${drop.y}px) rotate(${drop.rotation}deg)`;
             drop.el.style.opacity = drop.opacity;
-
             if (drop.y > containerHeight + 50) {
                 drop.el.remove();
                 flowerDrops.splice(i, 1);
@@ -179,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 anyActive = true;
             }
         }
-
         if (anyActive || flowerDrops.length > 0) {
             flowerAnimationId = requestAnimationFrame(animateFlowers);
         } else {
@@ -187,7 +197,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 可选：暴露一些变量供调试
-    window._bullet = bullet;
-    window._sendDanmaku = sendDanmaku;
+    console.log('🎉 校园墙加载完成！');
 });
