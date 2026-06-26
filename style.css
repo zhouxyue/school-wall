@@ -1,6 +1,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    font-family: "Microsoft YaHei", sans-serif;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
     height: 100vh;
     background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
     display: flex;
@@ -21,9 +21,10 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: center;      /* 所有直接子元素水平居中 */
 }
 
+/* 雨滴 Canvas 背景层 */
 #rainCanvas {
     position: absolute;
     top: 0;
@@ -35,11 +36,13 @@ body {
     border-radius: 30px;
 }
 
+/* 所有内容在 canvas 之上 */
 .container > *:not(#rainCanvas) {
     position: relative;
     z-index: 1;
 }
 
+/* 主标题 */
 h1 {
     color: #5a4a3a;
     font-size: 28px;
@@ -48,6 +51,7 @@ h1 {
     text-align: center;
 }
 
+/* 副标题 */
 .subtitle {
     color: #999;
     font-size: 18px;
@@ -55,6 +59,7 @@ h1 {
     text-align: center;
 }
 
+/* 巨大隶书“奠”字 */
 .memorial-char {
     font-family: 'LiSu', '华文隶书', 'STLiti', serif;
     font-size: 100px;
@@ -68,19 +73,19 @@ h1 {
     width: 100%;
 }
 
-/* ========= 照片画廊 - 照片改为正方形 ========= */
+/* 照片画廊 - 正方形图片 */
 .photo-gallery {
     display: flex;
-    gap: 10px;               /* 间距稍微加大，更美观 */
+    gap: 10px;
     justify-content: center;
     margin-bottom: 15px;
     flex-wrap: wrap;
     width: 100%;
 }
 .photo-gallery img {
-    width: 100px;            /* 宽度固定 */
-    height: 100px;           /* 高度等于宽度 → 正方形 */
-    object-fit: cover;       /* 裁切填充，确保不变形 */
+    width: 100px;
+    height: 100px;          /* 等于宽度 → 正方形 */
+    object-fit: cover;
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     transition: transform 0.3s;
@@ -89,6 +94,7 @@ h1 {
     transform: scale(1.05);
 }
 
+/* 弹幕容器 */
 #danmaku-area {
     flex: 1;
     position: relative;
@@ -99,6 +105,7 @@ h1 {
     width: 100%;
 }
 
+/* 弹幕文字样式 */
 .bullet-item {
     font-weight: bold;
     text-shadow: 0 0 10px rgba(255,255,255,0.8);
@@ -109,6 +116,7 @@ h1 {
 .color-3 { color: #A29BFE; }
 .color-4 { color: #FD79A8; }
 
+/* 输入区域 */
 .input-area {
     display: flex;
     gap: 10px;

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>莘庄中学校园墙 · 我还记得你</title>
+    <!-- 内联 favicon 消除 404 错误（樱花图标） -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,10 +22,13 @@
         <!-- 巨大的隶书“奠”字 -->
         <div class="memorial-char">奠</div>
 
-        <!-- 校园照片画廊 -->
+        <!-- 校园照片画廊（正方形，居中） -->
         <div class="photo-gallery">
-            <img src="images/campus1.png" alt="校园风景1">
-                    </div>
+            <img src="images/campus1.jpg" alt="校园风景1">
+            <img src="images/campus2.jpg" alt="校园风景2">
+            <img src="images/campus3.jpg" alt="校园风景3">
+            <!-- 您可以根据需要增减图片，保持命名连续 -->
+        </div>
 
         <!-- 弹幕显示区 -->
         <div id="danmaku-area"></div>
@@ -38,9 +43,13 @@
         </div>
     </div>
 
-    <!-- 引入外部库 -->
-    <script src="https://unpkg.com/js-bullets@latest/dist/BulletJs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- 外部库（使用国内访问稳定的 CDN） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-bullets/1.0.0/BulletJs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.min.js"></script>
+    <!-- 如果上述 CDN 失效，可改用下方备选（取消注释并注释掉上面两行） -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/js-bullets@1.0.0/dist/BulletJs.min.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script> -->
+
     <script src="script.js"></script>
 </body>
 </html>
