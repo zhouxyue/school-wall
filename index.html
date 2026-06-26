@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>莘庄中学校园墙 · 我还记得你</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 哭泣雨滴 Canvas（背景） -->
+        <canvas id="rainCanvas"></canvas>
+
+        <!-- 主标题 -->
+        <h1>🌸 莘庄中学校园墙，我还记得你</h1>
+
+        <!-- 副标题 -->
+        <p class="subtitle">校园墙我想你了😭</p>
+
+        <!-- 巨大的隶书“奠”字 -->
+        <div class="memorial-char">奠</div>
+
+        <!-- 校园照片画廊 -->
+        <div class="photo-gallery">
+            <img src="images/campus1.png" alt="校园风景1">
+                    </div>
+
+        <!-- 弹幕显示区 -->
+        <div id="danmaku-area"></div>
+
+        <!-- 献花按钮 -->
+        <button id="flower-btn">💐 献花</button>
+
+        <!-- 留言输入区 -->
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="写下你想说的话...">
+            <button id="send-btn">发送弹幕</button>
+        </div>
+    </div>
+
+    <!-- 引入外部库 -->
+    <script src="https://unpkg.com/js-bullets@latest/dist/BulletJs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
