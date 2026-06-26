@@ -1,125 +1,74 @@
 // ============================================================
-// 等待 DOM 完全加载后再执行所有逻辑
+// 等待 DOM 完全加载
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
 
     console.log('🔍 开始初始化校园墙...');
 
-    // ---------- 1. 弹幕功能 ----------
+    // ---------- 1. 弹幕功能（纯原生实现） ----------
     const container = document.getElementById('danmaku-area');
-    console.log('📦 容器 #danmaku-area:', container);
-
     if (!container) {
-        console.error('❌ 错误：找不到 id="danmaku-area" 的元素');
+        console.error('❌ 找不到 #danmaku-area');
         return;
     }
 
-    // 智能获取 BulletJs 构造函数（兼容不同加载方式）
-    let BulletJsLib = null;
-    if (typeof BulletJs !== 'undefined') {
-        BulletJsLib = BulletJs;
-    } else if (typeof window.BulletJs !== 'undefined') {
-        BulletJsLib = window.BulletJs;
-    } else {
-        // 尝试通过 eval 查找（不推荐，但作为最后手段）
-        try {
-            const global = Function('return this')();
-            if (global.BulletJs) BulletJsLib = global.BulletJs;
-        } catch (e) {}
+    // 弹幕配置
+    const TRACK_COUNT = 6;
+    const BULLET_DURATION = 8000;
+    const COLORS = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A29BFE', '#FD79A8'];
+
+    let trackRightEdges = new Array(TRACK_COUNT).fill(0);
+    const trackPositions = [];
+    for (let i = 0; i < TRACK_COUNT; i++) {
+        trackPositions.push((i + 0.5) / TRACK_COUNT);
     }
 
-    let bullet = null;
-
-    if (!BulletJsLib) {
-        console.warn('⚠️ BulletJs 库未加载，将使用简易弹幕备用方案');
-        // 使用简单的 setTimeout 和 DOM 操作模拟弹幕（备用）
-        bullet = {
-            shoot: function(el) {
-                // 简单实现：将元素添加到容器，用 CSS 动画平移
-                const container = document.getElementById('danmaku-area');
-                if (!container) return;
-                el.style.position = 'absolute';
-                el.style.whiteSpace = 'nowrap';
-                el.style.left = '100%';
-                el.style.top = (Math.random() * 80 + 10) + '%';
-                el.style.fontSize = (20 + Math.random() * 16) + 'px';
-                el.style.color = ['#FF6B6B','#4ECDC4','#FFE66D','#A29BFE','#FD79A8'][Math.floor(Math.random()*5)];
-                el.style.fontWeight = 'bold';
-                el.style.textShadow = '0 0 10px rgba(255,255,255,0.8)';
-                container.appendChild(el);
-                // 动画平移
-                const duration = 8000 + Math.random() * 2000;
-                const startTime = Date.now();
-                function animate() {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const x = 100 - progress * 120; // 从右侧移出左侧
-                    el.style.transform = `translateX(${x}%)`;
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        el.remove();
-                    }
-                }
-                animate();
-            }
-        };
-        console.log('✅ 使用备用弹幕引擎');
-    } else {
-        try {
-            const config = {
-                container: container,
-                trackCount: 6,
-                duration: 8000
-            };
-            bullet = new BulletJsLib(config);
-            console.log('✅ 弹幕库初始化成功');
-        } catch (e) {
-            console.error('❌ 弹幕初始化失败，使用备用方案:', e);
-            // 同样启用备用
-            bullet = {
-                shoot: function(el) {
-                    // 同上简易实现
-                    const container = document.getElementById('danmaku-area');
-                    if (!container) return;
-                    el.style.position = 'absolute';
-                    el.style.whiteSpace = 'nowrap';
-                    el.style.left = '100%';
-                    el.style.top = (Math.random() * 80 + 10) + '%';
-                    el.style.fontSize = (20 + Math.random() * 16) + 'px';
-                    el.style.color = ['#FF6B6B','#4ECDC4','#FFE66D','#A29BFE','#FD79A8'][Math.floor(Math.random()*5)];
-                    el.style.fontWeight = 'bold';
-                    el.style.textShadow = '0 0 10px rgba(255,255,255,0.8)';
-                    container.appendChild(el);
-                    const duration = 8000 + Math.random() * 2000;
-                    const startTime = Date.now();
-                    function animate() {
-                        const elapsed = Date.now() - startTime;
-                        const progress = Math.min(elapsed / duration, 1);
-                        const x = 100 - progress * 120;
-                        el.style.transform = `translateX(${x}%)`;
-                        if (progress < 1) {
-                            requestAnimationFrame(animate);
-                        } else {
-                            el.remove();
-                        }
-                    }
-                    animate();
-                }
-            };
-        }
-    }
-
-    // 发送弹幕函数（统一接口）
     function sendDanmaku(text) {
-        if (!text.trim() || !bullet) return;
+        if (!text.trim()) return;
+        let trackIndex = Math.floor(Math.random() * TRACK_COUNT);
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const candidate = (trackIndex + attempt) % TRACK_COUNT;
+            const containerWidth = container.clientWidth;
+            if (trackRightEdges[candidate] < containerWidth * 0.8) {
+                trackIndex = candidate;
+                break;
+            }
+        }
+
         const el = document.createElement('span');
         el.textContent = text;
         el.className = 'bullet-item';
-        bullet.shoot(el);
+        const fontSize = 20 + Math.floor(Math.random() * 16);
+        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        el.style.fontSize = fontSize + 'px';
+        el.style.color = color;
+        const topPercent = trackPositions[trackIndex] * 100;
+        el.style.top = topPercent + '%';
+        el.style.left = '100%';
+        container.appendChild(el);
+
+        const elWidth = el.offsetWidth || 100;
+        const startTime = performance.now();
+        const startLeft = 100;
+        const endLeft = - (elWidth / container.clientWidth) * 100 - 10;
+
+        function animateBullet(timestamp) {
+            const progress = (timestamp - startTime) / BULLET_DURATION;
+            if (progress >= 1) {
+                el.remove();
+                trackRightEdges[trackIndex] = 0;
+                return;
+            }
+            const currentLeft = startLeft + (endLeft - startLeft) * progress;
+            el.style.transform = `translateX(${currentLeft - 100}%)`;
+            const containerWidth = container.clientWidth;
+            const currentRight = containerWidth * (currentLeft / 100) + elWidth;
+            trackRightEdges[trackIndex] = currentRight;
+            requestAnimationFrame(animateBullet);
+        }
+        requestAnimationFrame(animateBullet);
     }
 
-    // 绑定发送事件
     document.getElementById('send-btn').addEventListener('click', function() {
         const input = document.getElementById('msg-input');
         sendDanmaku(input.value);
@@ -129,22 +78,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') document.getElementById('send-btn').click();
     });
 
-    // 欢迎弹幕
     const welcomeMsgs = ['🌸 欢迎回来', '✨ 青春不散场', '📖 莘庄中学记忆', '💖 这里永远有你的位置'];
     welcomeMsgs.forEach((msg, idx) => {
         setTimeout(() => sendDanmaku(msg), idx * 1500);
     });
 
-    // ---------- 2. 献花功能 ----------
+    console.log('✅ 弹幕功能已启动（纯原生）');
+
+    // ---------- 2. 献花：花朵 emoji 飘落 ----------
     document.getElementById('flower-btn').addEventListener('click', function() {
-        // 五彩纸屑（使用 confetti 库，如果加载失败则忽略）
-        if (typeof confetti === 'function') {
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            confetti({ particleCount: 100, spread: 60, origin: { x: 0.1, y: 0.5 } });
-            confetti({ particleCount: 100, spread: 60, origin: { x: 0.9, y: 0.5 } });
-        } else {
-            console.warn('⚠️ confetti 库未加载，跳过纸屑效果');
-        }
         launchFlowers();
     });
 
@@ -200,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('☔ 哭泣雨滴已启动');
     })();
 
-    // ---------- 4. 花朵飘落 ----------
+    // ---------- 4. 花朵飘落（献花触发）----------
     let flowerDrops = [];
     let flowerAnimationId = null;
 
@@ -208,7 +150,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.querySelector('.container');
         if (!container) return;
         const emojis = ['🌸', '🌺', '🌹', '🌷', '🌻', '💐', '🌼', '🌸'];
-        const count = 25 + Math.floor(Math.random() * 16);
+        // ★★★ 修改点：花朵数量从 25~40 减少到 10~20 ★★★
+        const count = 10 + Math.floor(Math.random() * 11); // 10~20朵
         for (let i = 0; i < count; i++) {
             const el = document.createElement('span');
             el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
@@ -270,6 +213,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     console.log('🎉 校园墙加载完成！');
-    console.log('   - 弹幕库:', typeof BulletJs !== 'undefined' ? '✔️ 已加载' : '❌ 未加载 (已启用备用)');
-    console.log('   - 撒花库:', typeof confetti !== 'undefined' ? '✔️ 已加载' : '❌ 未加载');
 });

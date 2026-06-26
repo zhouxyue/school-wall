@@ -68,7 +68,7 @@ h1 {
     width: 100%;
 }
 
-/* 单张照片：尺寸加大，仍保持正方形 */
+/* 单张照片，正方形居中 */
 .photo-gallery {
     display: flex;
     justify-content: center;
@@ -76,8 +76,8 @@ h1 {
     width: 100%;
 }
 .photo-gallery img {
-    width: 200px;          /* 比之前大 */
-    height: 200px;         /* 保持正方形 */
+    width: 200px;
+    height: 200px;
     object-fit: cover;
     border-radius: 16px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -97,15 +97,14 @@ h1 {
     width: 100%;
 }
 
+/* 弹幕文字样式 */
 .bullet-item {
+    position: absolute;
+    white-space: nowrap;
     font-weight: bold;
     text-shadow: 0 0 10px rgba(255,255,255,0.8);
+    will-change: transform;
 }
-.color-0 { color: #FF6B6B; }
-.color-1 { color: #4ECDC4; }
-.color-2 { color: #FFE66D; }
-.color-3 { color: #A29BFE; }
-.color-4 { color: #FD79A8; }
 
 .input-area {
     display: flex;
