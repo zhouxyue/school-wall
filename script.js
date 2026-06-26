@@ -10,57 +10,73 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📦 容器 #danmaku-area:', container);
 
     if (!container) {
-        console.error('❌ 错误：找不到 id="danmaku-area" 的元素，请检查 HTML');
+        console.error('❌ 错误：找不到 id="danmaku-area" 的元素');
         return;
     }
 
-    if (typeof BulletJs === 'undefined') {
-        console.error('❌ 错误：BulletJs 库未加载，请检查 CDN 链接');
-        return;
-    }
-
-    try {
-        const config = {
-            container: container,
-            trackCount: 6,
-            duration: 8000
-        };
-        const bullet = new BulletJs(config);
-        console.log('✅ 弹幕库初始化成功');
-
-        // 发送弹幕函数
-        function sendDanmaku(text) {
-            if (!text.trim()) return;
-            const colorClass = 'color-' + Math.floor(Math.random() * 5);
-            const fontSize = 20 + Math.floor(Math.random() * 16);
-            const el = document.createElement('span');
-            el.textContent = text;
-            el.className = `bullet-item ${colorClass}`;
-            el.style.fontSize = fontSize + 'px';
-            bullet.shoot(el);
+    // 检查 BulletJs 是否可用（注意：库可能通过全局变量暴露，也可能通过模块方式）
+    let BulletJsLib = null;
+    if (typeof BulletJs !== 'undefined') {
+        BulletJsLib = BulletJs;
+    } else if (typeof window.BulletJs !== 'undefined') {
+        BulletJsLib = window.BulletJs;
+    } else {
+        // 尝试从全局作用域查找
+        try {
+            BulletJsLib = Function('return BulletJs')();
+        } catch (e) {
+            // 忽略
         }
+    }
 
-        // 绑定发送事件
-        document.getElementById('send-btn').addEventListener('click', function() {
-            const input = document.getElementById('msg-input');
-            sendDanmaku(input.value);
-            input.value = '';
-        });
-        document.getElementById('msg-input').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') document.getElementById('send-btn').click();
-        });
+    if (!BulletJsLib) {
+        console.error('❌ 错误：BulletJs 库未加载，请检查 CDN 链接');
+        console.log('💡 提示：请确保 index.html 中正确加载了弹幕库脚本');
+        // 不 return，让页面其他功能（献花、雨滴）继续工作
+    } else {
+        try {
+            const config = {
+                container: container,
+                trackCount: 6,
+                duration: 8000
+            };
+            const bullet = new BulletJsLib(config);
+            console.log('✅ 弹幕库初始化成功');
 
-        // 欢迎弹幕
-        const welcomeMsgs = ['🌸 欢迎回来', '✨ 青春不散场', '📖 莘庄中学记忆', '💖 这里永远有你的位置'];
-        welcomeMsgs.forEach((msg, idx) => {
-            setTimeout(() => sendDanmaku(msg), idx * 1500);
-        });
+            // 发送弹幕函数
+            function sendDanmaku(text) {
+                if (!text.trim()) return;
+                const colorClass = 'color-' + Math.floor(Math.random() * 5);
+                const fontSize = 20 + Math.floor(Math.random() * 16);
+                const el = document.createElement('span');
+                el.textContent = text;
+                el.className = `bullet-item ${colorClass}`;
+                el.style.fontSize = fontSize + 'px';
+                bullet.shoot(el);
+            }
 
-        // 暴露调试
-        window._bullet = bullet;
+            // 绑定发送事件
+            document.getElementById('send-btn').addEventListener('click', function() {
+                const input = document.getElementById('msg-input');
+                sendDanmaku(input.value);
+                input.value = '';
+            });
+            document.getElementById('msg-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') document.getElementById('send-btn').click();
+            });
 
-    } catch (e) {
-        console.error('❌ 弹幕初始化失败:', e);
+            // 欢迎弹幕
+            const welcomeMsgs = ['🌸 欢迎回来', '✨ 青春不散场', '📖 莘庄中学记忆', '💖 这里永远有你的位置'];
+            welcomeMsgs.forEach((msg, idx) => {
+                setTimeout(() => sendDanmaku(msg), idx * 1500);
+            });
+
+            // 暴露调试
+            window._bullet = bullet;
+
+        } catch (e) {
+            console.error('❌ 弹幕初始化失败:', e);
+        }
     }
 
     // ---------- 2. 献花功能 ----------
@@ -198,4 +214,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     console.log('🎉 校园墙加载完成！');
+    console.log('   - 弹幕库:', typeof BulletJs !== 'undefined' ? '✔️ 已加载' : '❌ 未加载');
+    console.log('   - 撒花库:', typeof confetti !== 'undefined' ? '✔️ 已加载' : '❌ 未加载');
 });
