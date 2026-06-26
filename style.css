@@ -68,7 +68,6 @@ h1 {
     width: 100%;
 }
 
-/* 单张照片，正方形居中 */
 .photo-gallery {
     display: flex;
     justify-content: center;
@@ -95,6 +94,9 @@ h1 {
     background: rgba(0, 0, 0, 0.03);
     min-height: 150px;
     width: 100%;
+    /* ★ 新增：上下内边距，防止弹幕贴边 */
+    padding: 20px 0;
+    box-sizing: border-box;
 }
 
 /* 弹幕文字样式 */

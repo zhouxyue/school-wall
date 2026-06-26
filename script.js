@@ -12,19 +12,34 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // 弹幕配置
-    const TRACK_COUNT = 6;
-    const BULLET_DURATION = 8000;
+    // ============================================================
+    // 弹幕配置（所有可调参数集中在这里）
+    // ============================================================
+    const TRACK_COUNT = 6;                       // 轨道数量
+    const BASE_SPEED_PX_PER_MS = 0.15;           // 基础速度（像素/毫秒），300px/s
+    const BULLET_SPEED = 1.5;                   // 速度倍数（1.0=默认，1.5=快50%）
     const COLORS = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A29BFE', '#FD79A8'];
+    // 实际速度 = BASE_SPEED_PX_PER_MS * BULLET_SPEED
+    // ============================================================
 
+    // 每个轨道当前最右侧弹幕的右边界位置
     let trackRightEdges = new Array(TRACK_COUNT).fill(0);
+    // ★ 修改：轨道位置从 5% 到 75% 均匀分布，底部预留 25% 空间，彻底避免遮挡
     const trackPositions = [];
     for (let i = 0; i < TRACK_COUNT; i++) {
-        trackPositions.push((i + 0.5) / TRACK_COUNT);
+        // 从 5% 到 75%，均匀分布
+        const pos = 0.05 + (i / (TRACK_COUNT - 1)) * 0.70;
+        trackPositions.push(pos);
     }
 
+    /**
+     * 发送一条弹幕
+     * @param {string} text - 弹幕文字内容
+     */
     function sendDanmaku(text) {
         if (!text.trim()) return;
+
+        // 选择一个空闲轨道
         let trackIndex = Math.floor(Math.random() * TRACK_COUNT);
         for (let attempt = 0; attempt < 3; attempt++) {
             const candidate = (trackIndex + attempt) % TRACK_COUNT;
@@ -35,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // 创建弹幕元素
         const el = document.createElement('span');
         el.textContent = text;
         el.className = 'bullet-item';
@@ -42,72 +58,107 @@ document.addEventListener('DOMContentLoaded', function() {
         const color = COLORS[Math.floor(Math.random() * COLORS.length)];
         el.style.fontSize = fontSize + 'px';
         el.style.color = color;
-        const topPercent = trackPositions[trackIndex] * 100;
-        el.style.top = topPercent + '%';
+        // 使用新的轨道位置（百分比）
+        el.style.top = (trackPositions[trackIndex] * 100) + '%';
+        // 初始位置：容器右侧外部（left: 100%）
         el.style.left = '100%';
         container.appendChild(el);
 
+        // 获取元素宽度
         const elWidth = el.offsetWidth || 100;
-        const startTime = performance.now();
-        const startLeft = 100;
-        const endLeft = - (elWidth / container.clientWidth) * 100 - 10;
+        // 计算实际速度（像素/毫秒）
+        const speed = BASE_SPEED_PX_PER_MS * BULLET_SPEED;
 
+        // 使用 transform 进行像素级平移
+        let offsetX = container.clientWidth; // 初始偏移量 = 容器宽度（右侧外）
+        let lastTimestamp = performance.now();
+
+        /**
+         * 弹幕动画循环（基于固定像素速度）
+         */
         function animateBullet(timestamp) {
-            const progress = (timestamp - startTime) / BULLET_DURATION;
-            if (progress >= 1) {
+            const delta = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+
+            // 向左移动
+            offsetX -= speed * delta;
+
+            // 如果完全移出左侧（右边界 < 0），移除
+            if (offsetX + elWidth < 0) {
                 el.remove();
                 trackRightEdges[trackIndex] = 0;
                 return;
             }
-            const currentLeft = startLeft + (endLeft - startLeft) * progress;
-            el.style.transform = `translateX(${currentLeft - 100}%)`;
+
+            // 应用位移
+            const relativeOffset = offsetX - container.clientWidth;
+            el.style.transform = 'translateX(' + relativeOffset + 'px)';
+
+            // 更新轨道右边界
             const containerWidth = container.clientWidth;
-            const currentRight = containerWidth * (currentLeft / 100) + elWidth;
+            const currentRight = offsetX + elWidth;
             trackRightEdges[trackIndex] = currentRight;
+
             requestAnimationFrame(animateBullet);
         }
-        requestAnimationFrame(animateBullet);
+        // 启动动画
+        requestAnimationFrame(function(timestamp) {
+            lastTimestamp = timestamp;
+            animateBullet(timestamp);
+        });
     }
 
+    // ---------- 绑定发送事件 ----------
     document.getElementById('send-btn').addEventListener('click', function() {
         const input = document.getElementById('msg-input');
         sendDanmaku(input.value);
         input.value = '';
     });
+
     document.getElementById('msg-input').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('send-btn').click();
+        if (e.key === 'Enter') {
+            document.getElementById('send-btn').click();
+        }
     });
 
-    const welcomeMsgs = ['🌸 欢迎回来', '✨ 青春不散场', '📖 莘庄中学记忆', '💖 这里永远有你的位置'];
-    welcomeMsgs.forEach((msg, idx) => {
-        setTimeout(() => sendDanmaku(msg), idx * 1500);
+    // ---------- 欢迎弹幕 ----------
+    const welcomeMsgs = ['😱 校园墙你怎么似了', '😢 我的母校乐子这块谁给我补啊', '😭 莘庄中学校园多功能墙', '🥺我还记得你'];
+    welcomeMsgs.forEach(function(msg, idx) {
+        setTimeout(function() {
+            sendDanmaku(msg);
+        }, idx * 1500);
     });
 
-    console.log('✅ 弹幕功能已启动（纯原生）');
+    console.log('✅ 弹幕功能已启动（固定像素速度）');
+    console.log('   - 基础速度: ' + BASE_SPEED_PX_PER_MS + ' px/ms');
+    console.log('   - 速度倍数: ' + BULLET_SPEED + 'x');
+    console.log('   - 实际速度: ' + (BASE_SPEED_PX_PER_MS * BULLET_SPEED) + ' px/ms');
+    console.log('   - 轨道范围: 5% ~ 75%（底部预留 25% 空间）');
 
     // ---------- 2. 献花：花朵 emoji 飘落 ----------
     document.getElementById('flower-btn').addEventListener('click', function() {
         launchFlowers();
     });
 
-    // ---------- 3. 哭泣雨滴 ----------
+    // ---------- 3. 哭泣雨滴（Canvas 背景动画） ----------
     (function initRain() {
         const canvas = document.getElementById('rainCanvas');
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+        var ctx = canvas.getContext('2d');
 
         function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
+            var rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        const emojis = ['😢', '😭', '🥺', '💧', '😥'];
-        const drops = [];
-        const COUNT = 60;
-        for (let i = 0; i < COUNT; i++) {
+        var emojis = ['😢', '😭', '🥺', '💧', '😥'];
+        var drops = [];
+        var COUNT = 60;
+
+        for (var i = 0; i < COUNT; i++) {
             drops.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height - canvas.height,
@@ -120,7 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function drawRain() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let d of drops) {
+            for (var i = 0; i < drops.length; i++) {
+                var d = drops[i];
                 d.y += d.speed;
                 if (d.y > canvas.height + 50) {
                     d.y = -50;
@@ -142,20 +194,20 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('☔ 哭泣雨滴已启动');
     })();
 
-    // ---------- 4. 花朵飘落（献花触发）----------
-    let flowerDrops = [];
-    let flowerAnimationId = null;
+    // ---------- 4. 花朵飘落（每次 3 朵） ----------
+    var flowerDrops = [];
+    var flowerAnimationId = null;
 
     function launchFlowers() {
-        const container = document.querySelector('.container');
+        var container = document.querySelector('.container');
         if (!container) return;
-        const emojis = ['🌸', '🌺', '🌹', '🌷', '🌻', '💐', '🌼', '🌸'];
-        // ★★★ 修改点：花朵数量从 25~40 减少到 10~20 ★★★
-        const count = 10 + Math.floor(Math.random() * 11); // 10~20朵
-        for (let i = 0; i < count; i++) {
-            const el = document.createElement('span');
+        var emojis = ['🌸', '🌺', '🌹', '🌷', '🌻', '💐', '🌼', '🌸'];
+        var count = 3;
+
+        for (var i = 0; i < count; i++) {
+            var el = document.createElement('span');
             el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-            const size = 20 + Math.random() * 25;
+            var size = 20 + Math.random() * 25;
             el.style.fontSize = size + 'px';
             el.style.position = 'absolute';
             el.style.left = Math.random() * 100 + '%';
@@ -163,8 +215,9 @@ document.addEventListener('DOMContentLoaded', function() {
             el.style.pointerEvents = 'none';
             el.style.zIndex = '2';
             el.style.opacity = 0.8 + Math.random() * 0.2;
-            el.style.transform = `rotate(${Math.random() * 360}deg)`;
+            el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
             container.appendChild(el);
+
             flowerDrops.push({
                 el: el,
                 y: -30,
@@ -174,30 +227,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 opacity: 0.8 + Math.random() * 0.2
             });
         }
+
         if (!flowerAnimationId) {
             animateFlowers();
         }
     }
 
     function animateFlowers() {
-        const container = document.querySelector('.container');
+        var container = document.querySelector('.container');
         if (!container) {
             flowerAnimationId = null;
             return;
         }
-        const containerHeight = container.getBoundingClientRect().height;
-        let anyActive = false;
-        for (let i = flowerDrops.length - 1; i >= 0; i--) {
-            const drop = flowerDrops[i];
+        var containerHeight = container.getBoundingClientRect().height;
+        var anyActive = false;
+
+        for (var i = flowerDrops.length - 1; i >= 0; i--) {
+            var drop = flowerDrops[i];
             drop.y += drop.speed;
             drop.rotation += drop.rotationSpeed;
-            const progress = drop.y / containerHeight;
+            var progress = drop.y / containerHeight;
+
             if (progress > 0.5) {
                 drop.opacity = 1 - (progress - 0.5) * 1.5;
                 if (drop.opacity < 0) drop.opacity = 0;
             }
-            drop.el.style.transform = `translateY(${drop.y}px) rotate(${drop.rotation}deg)`;
+
+            drop.el.style.transform = 'translateY(' + drop.y + 'px) rotate(' + drop.rotation + 'deg)';
             drop.el.style.opacity = drop.opacity;
+
             if (drop.y > containerHeight + 50) {
                 drop.el.remove();
                 flowerDrops.splice(i, 1);
@@ -205,6 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 anyActive = true;
             }
         }
+
         if (anyActive || flowerDrops.length > 0) {
             flowerAnimationId = requestAnimationFrame(animateFlowers);
         } else {
